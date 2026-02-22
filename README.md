@@ -4,9 +4,7 @@ A multi-dashboard data visualization platform powered by Claude Code. This proje
 
 ![Claude-Code-Session](assets/session.png)
 
-While the example prompt below represents a fairly common dataset use case, the system has also been tested with users who have much more niche data requirements: including bio-tech researchers exploring relationships between diseases, social workers attempting to retrieve region-specific datasets, and demographic analysis for small municipalities.
-
-In addition to sourcing public datasets (e.g. government portals, PDFs, or structured web content), the platform can also integrate with existing data infrastructure. During testing, this included successfully connecting to both an SQLite database and AWS Athena to retrieve and visualize proprietary or internal datasets.
+While the example supports a common dataset use case, the system has also been tested with users who have much more niche data requirements. In addition to sourcing public datasets, the platform can also integrate with existing data infrastructure (AWS, SQLite, etc).
 
 ## Getting Started
 
@@ -26,9 +24,7 @@ claude
 
 Prompt Claude to create a dashboard and scope out your first graph:
 
-```bash
-Create precious metals dashboard. Plot historic silver price, highlight 8% increases and annotate why the surge happened.
-```
+> Create precious metals dashboard. Plot historic silver price, highlight 8% increases and annotate why the surge happened.
 
 ![Dashboard Preview](assets/silverchart.gif)
 
