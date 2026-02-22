@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""
+Print the current .session/ state as JSON.
+Used by skills to understand session progress without reading files manually.
+"""
+import json
+import os
+import sys
+
+SESSION_DIR = ".session"
+
+def main():
+    artifacts = {
+        "datasource": os.path.exists(f"{SESSION_DIR}/datasource.json"),
+        "adapter":    os.path.exists(f"{SESSION_DIR}/adapter.py"),
+        "charts":     os.path.exists(f"{SESSION_DIR}/charts.json"),
+        "placement":  os.path.exists(f"{SESSION_DIR}/placement.json"),
+    }
+
+    has_session = any(artifacts.values())
+    slug = None
+    chart_count = 0
+    is_edit = False
+    dashboard = None
+
+    # Read context.json for active dashboard
+    context_path = f"{SESSION_DIR}/context.json"
+    if os.path.exists(context_path):
+        try:
+            with open(context_path) as f:
+                ctx = json.load(f)
+                dashboard = ctx.get("dashboard")
+        except Exception:
+            pass
+
+    if artifacts["datasource"]:
+        try:
+            with open(f"{SESSION_DIR}/datasource.json") as f:
+                ds = json.load(f)
+                slug = ds.get("slug")
+                is_edit = ds.get("is_edit", False)
+        except Exception:
+            pass
+
+    if artifacts["charts"]:
+        try:
+            with open(f"{SESSION_DIR}/charts.json") as f:
+                charts = json.load(f)
+                chart_count = len(charts) if isinstance(charts, list) else 0
+        except Exception:
+            pass
+
+    complete = all(artifacts.values())
+
+    result = {
+        "has_session": has_session,
+        "dashboard": dashboard,
+        "slug": slug,
+        "is_edit": is_edit,
+        "artifacts": artifacts,
+        "chart_count": chart_count,
+        "complete": complete,
+    }
+
+    print(json.dumps(result, indent=2))
+
+if __name__ == "__main__":
+    main()

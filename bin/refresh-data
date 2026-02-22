@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SPECIFIC_DASHBOARD=""
+SPECIFIC_ADAPTER=""
+
+# Parse args
+i=0
+args=("$@")
+while [[ $i -lt ${#args[@]} ]]; do
+  case "${args[$i]}" in
+    --dashboard)
+      i=$((i+1))
+      SPECIFIC_DASHBOARD="${args[$i]}"
+      ;;
+    --adapter)
+      i=$((i+1))
+      SPECIFIC_ADAPTER="${args[$i]}"
+      ;;
+  esac
+  i=$((i+1))
+done
+
+run_adapter() {
+  local slug="$1"
+  local adapter_path="$2"
+  local dashboard_dir="dashboards/${slug}"
+  local name
+  name=$(basename "$adapter_path" .py)
+
+  printf "  [%s] %s ... " "$slug" "$name"
+  if DASHBOARD_DIR="$dashboard_dir" python3 "$adapter_path" 2>/dev/null; then
+    echo "OK"
+    return 0
+  else
+    echo "FAILED"
+    return 1
+  fi
+}
+
+if [[ -n "$SPECIFIC_ADAPTER" && -n "$SPECIFIC_DASHBOARD" ]]; then
+  # Run specific adapter in specific dashboard
+  adapter_path="dashboards/${SPECIFIC_DASHBOARD}/adapters/${SPECIFIC_ADAPTER}.py"
+  if [[ ! -f "$adapter_path" ]]; then
+    echo "ERROR: Adapter not found: $adapter_path" >&2
+    exit 1
+  fi
+  run_adapter "$SPECIFIC_DASHBOARD" "$adapter_path"
+  exit $?
+elif [[ -n "$SPECIFIC_ADAPTER" ]]; then
+  # --adapter only (legacy single-dashboard compat: search all dashboards)
+  found=0
+  for adapter_path in dashboards/*/adapters/"${SPECIFIC_ADAPTER}.py"; do
+    [[ -f "$adapter_path" ]] || continue
+    slug=$(echo "$adapter_path" | cut -d/ -f2)
+    run_adapter "$slug" "$adapter_path"
+    found=1
+  done
+  if [[ $found -eq 0 ]]; then
+    echo "ERROR: Adapter '${SPECIFIC_ADAPTER}' not found in any dashboard" >&2
+    exit 1
+  fi
+  exit 0
+fi
+
+# Collect dashboards to run
+if [[ -n "$SPECIFIC_DASHBOARD" ]]; then
+  dashboard_dirs=("dashboards/${SPECIFIC_DASHBOARD}")
+  if [[ ! -d "${dashboard_dirs[0]}" ]]; then
+    echo "ERROR: Dashboard not found: ${dashboard_dirs[0]}" >&2
+    exit 1
+  fi
+else
+  dashboard_dirs=()
+  while IFS= read -r d; do
+    dashboard_dirs+=("$d")
+  done < <(find dashboards -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort)
+fi
+
+if [[ ${#dashboard_dirs[@]} -eq 0 ]]; then
+  echo "No dashboards found in dashboards/"
+  exit 0
+fi
+
+PASS=0
+FAIL=0
+
+for dashboard_dir in "${dashboard_dirs[@]}"; do
+  slug=$(basename "$dashboard_dir")
+  adapters_dir="${dashboard_dir}/adapters"
+
+  if [[ ! -d "$adapters_dir" ]]; then
+    continue
+  fi
+
+  adapters=()
+  while IFS= read -r a; do
+    adapters+=("$a")
+  done < <(find "$adapters_dir" -name "*.py" | sort)
+
+  if [[ ${#adapters[@]} -eq 0 ]]; then
+    echo "  [${slug}] No adapters found"
+    continue
+  fi
+
+  for adapter_path in "${adapters[@]}"; do
+    if run_adapter "$slug" "$adapter_path"; then
+      ((PASS++)) || true
+    else
+      ((FAIL++)) || true
+    fi
+  done
+done
+
+echo ""
+echo "Results: $PASS passed, $FAIL failed"

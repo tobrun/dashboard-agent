@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PREVIEW=false
+DASHBOARD_SLUG=""
+
+# Parse args
+i=0
+args=("$@")
+while [[ $i -lt ${#args[@]} ]]; do
+  case "${args[$i]}" in
+    --preview)
+      PREVIEW=true
+      ;;
+    --dashboard)
+      i=$((i+1))
+      DASHBOARD_SLUG="${args[$i]}"
+      ;;
+  esac
+  i=$((i+1))
+done
+
+# Ensure .session/ directory exists
+mkdir -p .session
+
+# Read active dashboard from context.json if not passed explicitly
+if [[ -z "$DASHBOARD_SLUG" && -f ".session/context.json" ]]; then
+  DASHBOARD_SLUG=$(python3 -c "import json,sys; d=json.load(open('.session/context.json')); print(d.get('dashboard',''))" 2>/dev/null || true)
+fi
+
+# Check if Vite is already running on port 5173
+if lsof -ti:5173 >/dev/null 2>&1; then
+  echo "Dev server already running on http://localhost:5173"
+else
+  echo "Starting dev server..."
+  npm run dev &
+  # Wait for server to be ready (up to 10s)
+  for i in {1..20}; do
+    sleep 0.5
+    curl -s -o /dev/null http://localhost:5173 && break
+  done
+  echo "Dev server started at http://localhost:5173"
+fi
+
+if [[ "$PREVIEW" == true ]]; then
+  if [[ -n "$DASHBOARD_SLUG" ]]; then
+    URL="http://localhost:5173/d/${DASHBOARD_SLUG}/preview"
+  else
+    URL="http://localhost:5173/preview"
+  fi
+elif [[ -n "$DASHBOARD_SLUG" ]]; then
+  URL="http://localhost:5173/d/${DASHBOARD_SLUG}"
+else
+  URL="http://localhost:5173/"
+fi
+
+echo "Opening: $URL"
+open "$URL" 2>/dev/null || xdg-open "$URL" 2>/dev/null || echo "Open $URL in your browser"

@@ -1,0 +1,218 @@
+#!/usr/bin/env python3
+"""
+Promote the current .session/ to the dashboard.
+  1. Validate all artifacts present
+  2. Read .session/context.json for target dashboard slug
+  3. Copy adapter to dashboards/<dashboard>/adapters/<slug>.py
+  4. Run adapter (with DASHBOARD_DIR env var) to refresh data
+  5. Merge charts + placement into dashboards/<dashboard>/dashboard.json
+  6. Git commit with <dashboard>: prefix
+  7. Clear .session/
+"""
+import json
+import os
+import shutil
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+SESSION_DIR = ".session"
+REQUIRED = ["datasource.json", "adapter.py", "charts.json", "placement.json"]
+
+
+def fail(msg: str):
+    print(f"ERROR: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def slugify(title: str) -> str:
+    import re
+    return re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+
+
+def main():
+    # 1. Validate
+    missing = [f for f in REQUIRED if not os.path.exists(f"{SESSION_DIR}/{f}")]
+    if missing:
+        fail(
+            f"Incomplete session — missing: {', '.join(missing)}\n"
+            "Run /dashboard:new to complete the session before promoting."
+        )
+
+    # Load session artifacts
+    with open(f"{SESSION_DIR}/datasource.json") as f:
+        datasource = json.load(f)
+
+    with open(f"{SESSION_DIR}/charts.json") as f:
+        session_charts = json.load(f)
+
+    with open(f"{SESSION_DIR}/placement.json") as f:
+        placement = json.load(f)
+
+    slug = datasource.get("slug")
+    is_edit = datasource.get("is_edit", False)
+
+    if not slug:
+        fail("datasource.json missing 'slug' field")
+
+    # Read target dashboard from context.json
+    context_path = f"{SESSION_DIR}/context.json"
+    dashboard_slug = None
+    if os.path.exists(context_path):
+        try:
+            with open(context_path) as f:
+                ctx = json.load(f)
+                dashboard_slug = ctx.get("dashboard")
+        except Exception:
+            pass
+
+    if not dashboard_slug:
+        fail(
+            "No .session/context.json found (or missing 'dashboard' key).\n"
+            "Run /dashboard:new to start a session with a target dashboard."
+        )
+
+    dashboard_dir = f"dashboards/{dashboard_slug}"
+    if not os.path.isdir(dashboard_dir):
+        fail(f"Dashboard directory not found: {dashboard_dir}\nRun /dashboard:new to create it.")
+
+    # 2. Copy adapter
+    adapters_dir = f"{dashboard_dir}/adapters"
+    os.makedirs(adapters_dir, exist_ok=True)
+    adapter_dest = f"{adapters_dir}/{slug}.py"
+    shutil.copy(f"{SESSION_DIR}/adapter.py", adapter_dest)
+    print(f"Copied adapter → {adapter_dest}")
+
+    # 3. Run adapter to refresh data
+    data_dir = f"{dashboard_dir}/data"
+    os.makedirs(data_dir, exist_ok=True)
+    print(f"Running adapter: python {adapter_dest}")
+    env = os.environ.copy()
+    env["DASHBOARD_DIR"] = dashboard_dir
+    result = subprocess.run(
+        [sys.executable, adapter_dest],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    if result.returncode != 0:
+        print(f"WARNING: Adapter exited with code {result.returncode}")
+        print(result.stderr)
+        print("Proceeding with promotion anyway — fix the adapter later.")
+    else:
+        print("Adapter ran successfully.")
+
+    # 4. Load and update dashboard.json
+    dashboard_json_path = f"{dashboard_dir}/dashboard.json"
+    with open(dashboard_json_path) as f:
+        dashboard = json.load(f)
+
+    # Merge charts
+    if "charts" not in dashboard:
+        dashboard["charts"] = {}
+
+    for chart in session_charts:
+        chart_id = chart.get("id")
+        if not chart_id:
+            continue
+        dashboard["charts"][chart_id] = chart
+        print(f"  {'Updated' if is_edit else 'Added'} chart: {chart_id}")
+
+    # Merge placement into sections
+    section_title = placement.get("section", "")
+    section_id = slugify(section_title)
+    section_is_new = placement.get("section_is_new", True)
+    rows_to_add = placement.get("rows", [])
+    text_block = placement.get("text_block")
+
+    if "sections" not in dashboard:
+        dashboard["sections"] = []
+
+    if section_is_new or not is_edit:
+        # Build the new section
+        new_section_rows = []
+        if text_block:
+            new_section_rows.append({"text_block": text_block})
+        new_section_rows.extend(rows_to_add)
+
+        if section_is_new:
+            # Check if section with same id already exists (shouldn't, but guard it)
+            existing = next(
+                (s for s in dashboard["sections"] if s["id"] == section_id), None
+            )
+            if existing:
+                existing["rows"].extend(new_section_rows)
+                print(f"  Appended rows to existing section: {section_title}")
+            else:
+                dashboard["sections"].append(
+                    {"id": section_id, "title": section_title, "rows": new_section_rows}
+                )
+                print(f"  Created new section: {section_title}")
+        else:
+            # Find existing section by name and append rows
+            existing = next(
+                (s for s in dashboard["sections"] if s["id"] == section_id), None
+            )
+            if existing:
+                existing["rows"].extend(new_section_rows)
+                print(f"  Appended to section: {section_title}")
+            else:
+                dashboard["sections"].append(
+                    {"id": section_id, "title": section_title, "rows": new_section_rows}
+                )
+                print(f"  Created section: {section_title}")
+    else:
+        # Edit mode: find and update rows in-place by replacing chart references
+        edit_chart_ids = {c.get("id") for c in session_charts}
+        for section in dashboard["sections"]:
+            for row in section.get("rows", []):
+                if "slots" in row:
+                    for slot in row["slots"]:
+                        if slot.get("type") == "chart" and slot.get("chartId") in edit_chart_ids:
+                            pass  # Chart data already updated above; layout unchanged
+
+    # Update timestamps
+    dashboard["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # Write dashboard.json
+    with open(dashboard_json_path, "w") as f:
+        json.dump(dashboard, f, indent=2)
+    print(f"Updated {dashboard_json_path}")
+
+    # 5. Git commit
+    chart_titles = [c.get("title", c.get("id", "?")) for c in session_charts]
+    action = "Update" if is_edit else "Add"
+    commit_msg = f"{dashboard_slug}: {action} {', '.join(chart_titles)}"
+
+    try:
+        subprocess.run(
+            ["git", "add",
+             f"{adapters_dir}/",
+             f"{data_dir}/",
+             dashboard_json_path,
+             "requirements.txt",
+             ".env.example"],
+            check=True,
+        )
+        subprocess.run(["git", "commit", "-m", commit_msg], check=True)
+        # Get commit hash
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, check=True
+        )
+        print(f"\nCommitted: {commit_msg}")
+        print(f"Hash: {result.stdout.strip()}")
+        print(f"Rollback: git revert HEAD")
+    except subprocess.CalledProcessError as e:
+        print(f"WARNING: Git commit failed: {e}")
+        print("Files updated but not committed.")
+
+    # 6. Clear .session/
+    shutil.rmtree(SESSION_DIR)
+    os.makedirs(SESSION_DIR, exist_ok=True)
+    print(f"\nCleared .session/")
+    print("Done.")
+
+
+if __name__ == "__main__":
+    main()
