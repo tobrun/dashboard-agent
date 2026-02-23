@@ -3,11 +3,10 @@ import type { Section } from '../types/dashboard'
 interface Props {
   sections: Section[]
   dashboardTitle: string
-  onRefresh: () => void
   onExportPDF: () => void
 }
 
-export function TableOfContents({ sections, dashboardTitle, onRefresh, onExportPDF }: Props) {
+export function TableOfContents({ sections, dashboardTitle, onExportPDF }: Props) {
   if (sections.length === 0) return null
 
   const scrollTo = (id: string) => {
@@ -35,35 +34,6 @@ export function TableOfContents({ sections, dashboardTitle, onRefresh, onExportP
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-        <button
-          onClick={onRefresh}
-          className="shrink-0 flex items-center gap-1.5 px-3 py-1 text-xs text-db-text-muted hover:text-db-accent hover:bg-db-surface rounded border border-db-border hover:border-db-accent/40 transition-colors"
-        >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M1.5 6A4.5 4.5 0 0 1 9.17 3M10.5 6A4.5 4.5 0 0 1 2.83 9"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M9.5 1v2.5H7M2.5 11V8.5H5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Refresh
-        </button>
         <button
           onClick={onExportPDF}
           className="shrink-0 flex items-center gap-1.5 px-3 py-1 text-xs text-db-text-muted hover:text-db-accent hover:bg-db-surface rounded border border-db-border hover:border-db-accent/40 transition-colors"
@@ -85,7 +55,6 @@ export function TableOfContents({ sections, dashboardTitle, onRefresh, onExportP
           </svg>
           Export PDF
         </button>
-        </div>
       </div>
     </div>
   )

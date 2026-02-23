@@ -8,7 +8,6 @@ export interface DashboardConfig {
     accent: string
     font: string
   }
-  global_refresh_interval: number
   chart_height: number
   sections: Section[]
   charts: Record<string, ChartConfig>
@@ -49,8 +48,8 @@ export interface EmptySlot {
 export interface ChartConfig {
   id: string
   title: string
+  source?: string
   dataSource: string[]
-  refresh_interval?: number
   echartsOption: Record<string, unknown>
 }
 

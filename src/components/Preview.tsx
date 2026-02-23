@@ -5,11 +5,9 @@ import { ChartSlot } from './ChartSlot'
 const POLL_INTERVAL_MS = 2000
 const DEFAULT_CHART_HEIGHT = 400
 const DEFAULT_ACCENT = '#00d4ff'
-const DEFAULT_REFRESH = 60
 
 export function Preview({ slug }: { slug?: string }) {
   const [charts, setCharts] = useState<ChartConfig[]>([])
-  const [lastPoll, setLastPoll] = useState<Date | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -21,7 +19,6 @@ export function Preview({ slug }: { slug?: string }) {
         const data = (await res.json()) as ChartConfig[]
         if (!cancelled) {
           setCharts(Array.isArray(data) ? data : [])
-          setLastPoll(new Date())
         }
       } catch {
         // session API not available — silent
@@ -48,11 +45,9 @@ export function Preview({ slug }: { slug?: string }) {
             Live
           </span>
         </div>
-        {lastPoll && (
-          <span className="text-xs text-db-text-muted/50">
-            Polling every {POLL_INTERVAL_MS / 1000}s · Last: {lastPoll.toLocaleTimeString()}
-          </span>
-        )}
+        <span className="text-xs text-db-text-muted/50">
+          Polling every {POLL_INTERVAL_MS / 1000}s
+        </span>
       </div>
 
       <div className="px-6 py-6">
@@ -91,7 +86,6 @@ export function Preview({ slug }: { slug?: string }) {
                   <ChartSlot
                     chart={chart}
                     height={DEFAULT_CHART_HEIGHT}
-                    globalRefreshInterval={DEFAULT_REFRESH}
                     accent={DEFAULT_ACCENT}
                     slug={slug}
                   />

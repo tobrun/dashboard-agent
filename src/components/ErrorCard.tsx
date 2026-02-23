@@ -1,13 +1,8 @@
 interface Props {
   title: string
-  lastAttempted: Date | null
 }
 
-export function ErrorCard({ title, lastAttempted }: Props) {
-  const timestamp = lastAttempted
-    ? lastAttempted.toLocaleTimeString()
-    : 'never'
-
+export function ErrorCard({ title }: Props) {
   return (
     <div className="h-full flex flex-col items-center justify-center gap-3 bg-db-surface border border-db-error/30 rounded">
       <div className="flex items-center gap-2 text-db-error">
@@ -29,10 +24,7 @@ export function ErrorCard({ title, lastAttempted }: Props) {
         </svg>
         <span className="text-xs font-medium">Data unavailable</span>
       </div>
-      <div className="text-center">
-        <p className="text-db-text-primary text-xs font-medium">{title}</p>
-        <p className="text-db-text-muted text-xs mt-1">Last attempted: {timestamp}</p>
-      </div>
+      <p className="text-db-text-primary text-xs font-medium">{title}</p>
     </div>
   )
 }

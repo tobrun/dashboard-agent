@@ -17,13 +17,22 @@ Use this context in all proposals. Do NOT ask the user to describe what already 
 ## Step 0 — Determine target dashboard
 
 Infer the target dashboard from:
-1. Any slug or name mentioned in the user's request (e.g. "/dashboard:new portfolio" → `portfolio`)
-2. `.session/context.json` if a session is already in progress
-3. If only one dashboard exists and the request fits it, use that one
+1. Any slug or name mentioned in the user's request (e.g. "/dashboard:new portfolio" → `portfolio`) — skip straight to Step 1
+2. `.session/context.json` if a session is already in progress — skip straight to Step 1
 
-If ambiguous (multiple dashboards exist and none is obviously the target), ask via **AskUserQuestion**:
+Otherwise, **always** show a dashboard selector via **AskUserQuestion**, even if only one dashboard exists (the user may want to create a new one):
+
 > "Which dashboard should this go into?"
-Options: list existing slugs + "New dashboard" option
+
+Options: list each existing dashboard with its slug, title, and chart count, plus a "New dashboard" option.
+
+Example format:
+```
+1. demographics — "Demographics" (0 charts)
+2. geriatric — "Geriatric Health Dashboard" (3 charts)
+3. global-trade — "Global Trade" (1 chart)
++ New dashboard
+```
 
 If "New dashboard" is chosen (or slug doesn't exist yet):
 - Ask for a human-readable title (e.g. "Portfolio Tracker")
@@ -106,7 +115,6 @@ Adapter:     dashboards/<dashboard>/adapters/<slug>.py
 Slug:        <slug>
 Fields:      <list of fields>
 Transforms:  <list of transforms applied>
-Refresh:     every <N> seconds
 
 Data sample:
 <first 3-5 rows of output>
@@ -121,10 +129,38 @@ Write `.session/datasource.json`:
 {
   "slug": "<adapter-slug>",
   "type": "<rest|athena|csv|other>",
-  "refresh_interval": <seconds>,
+  "source": "<human-readable data source, e.g. 'GitHub REST API (api.github.com/search/repositories)'>",
   "is_edit": false
 }
 ```
+
+## Step 3.5 — Propose interactive enhancements
+
+After the datasource checkpoint is approved, inspect the confirmed data shape (fields, time range, categories, cardinality) and propose relevant interactive features via **AskUserQuestion** (multiSelect: true):
+
+```
+Your data has <describe shape — e.g. "24 months of time series across 3 categories">.
+I can enhance the charts with:
+
+☐ Annotations — mark key events on the timeline
+☐ Time-frame selector — toggle between different time windows
+☐ Category filter — show/hide individual series or categories
+☐ Comparison overlay — overlay a second metric or time period
+
+Which enhancements would you like? (select any, or skip)
+```
+
+**Only propose options that make sense for the data:**
+- **Annotations**: only if data is a time series
+- **Time-frame selector**: only if data spans > 1 month (uses ECharts `dataZoom`)
+- **Category filter**: only if data has 3+ categories/series (uses ECharts `legend` with `selected`)
+- **Comparison overlay**: only if there's a natural second dimension
+
+If annotations are selected, follow up with one question asking the user to list key events (dates + labels), or offer to research notable events via `WebSearch`.
+
+The selected enhancements inform Step 4's chart building — e.g. `dataZoom` for time-frame selectors, `legend` with `selected` for filtering, `markLine`/`markArea` for annotations.
+
+If the user skips (selects no options), proceed to Step 4 with no enhancements.
 
 ## Step 4 — Build all charts (build first, ask second)
 
@@ -173,17 +209,28 @@ Remove unchosen charts from `.session/charts.json`. If the user requests changes
 
 Read `dashboards/<slug>/dashboard.json` sections. Reason about the best placement for the chosen charts.
 
-Propose via **AskUserQuestion**:
+Draft a section title and a 1–2 sentence intro paragraph. Propose via **AskUserQuestion**:
 
 ```
 I'll place these in a new section "<Section Name>" at the end of the dashboard:
 
   Row 1: "<Chart A>" — full width
   Row 2: "<Chart B>" — full width
-  Intro text: "<1-2 sentence description of the section>"
 
-Section name, position, layout, or text to adjust?
+Section title: "<Proposed Section Name>"
+Intro text:    "<1-2 sentence description>"
+
+Want to adjust the section title, intro text, layout, or position?
 ```
+
+Options:
+- **Looks good** — keep as proposed
+- **Edit title / text** — change the section name or intro paragraph
+- **Remove text** — no intro paragraph, just the charts
+- **Go back** — return to chart selection
+
+If the user picks **Edit title / text**, ask a follow-up for the new title and/or text content.
+If the user picks **Remove text**, omit `text_block` from `placement.json`.
 
 Write `.session/placement.json`:
 ```json
@@ -211,7 +258,7 @@ Ready to add to dashboard:
   Adapter:     dashboards/<slug>/adapters/<adapter-slug>.py
   Charts:      <list: title (type, placement)>
   Section:     <name> (new)
-  Text block:  "<intro text>"
+  Text block:  "<intro text>" (or "(none)" if removed)
 
 Promote?
 ```
@@ -230,7 +277,6 @@ When creating a new dashboard at `dashboards/<slug>/dashboard.json`:
   "created_at": "<ISO8601>",
   "updated_at": "<ISO8601>",
   "theme": { "mode": "dark", "accent": "#00d4ff", "font": "JetBrains Mono" },
-  "global_refresh_interval": 60,
   "chart_height": 400,
   "sections": [],
   "charts": {}

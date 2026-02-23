@@ -3,7 +3,6 @@ import { usePDF } from 'react-to-pdf'
 import type { DashboardConfig, Row } from '../types/dashboard'
 import { isTextBlockRow, isSlotsRow, isChartSlot } from '../types/dashboard'
 import { TableOfContents } from './TableOfContents'
-import { triggerRefresh } from '../hooks/usePollingData'
 import { TextBlock } from './TextBlock'
 import { ChartSlot } from './ChartSlot'
 
@@ -51,7 +50,6 @@ function DashboardRow({ row, config, slug }: { row: Row; config: DashboardConfig
                 <ChartSlot
                   chart={chart}
                   height={config.chart_height}
-                  globalRefreshInterval={config.global_refresh_interval}
                   accent={config.theme.accent}
                   slug={slug}
                 />
@@ -122,9 +120,7 @@ export function Dashboard({ slug }: { slug: string }) {
       <TableOfContents
         sections={config.sections}
         dashboardTitle={config.title}
-        onRefresh={triggerRefresh}
         onExportPDF={() => {
-          // Point PDF capture at the main content area
           if (targetRef.current) toPDF()
         }}
       />

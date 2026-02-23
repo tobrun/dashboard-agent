@@ -28,7 +28,7 @@ Promote the current session to the dashboard.
      Adapter:     dashboards/<dashboard>/adapters/<slug>.py
      Charts:      <chart titles with types>
      Section:     <section name> (new/existing)
-     Text block:  "<intro text>" (if present)
+     Text block:  "<intro text>" (or "(none)" if no text block)
    ```
 
 5. **AskUserQuestion**: "Promote to dashboard?"

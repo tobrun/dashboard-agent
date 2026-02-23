@@ -31,7 +31,7 @@ Work lives in `.session/` until promotion:
 ```
 .session/
   context.json    ← FIRST artifact: { "dashboard": "<slug>" }
-  datasource.json ← Phase artifact: source config + slug
+  datasource.json ← Phase artifact: source config + slug + source attribution
   adapter.py      ← Phase artifact: generated Python adapter
   charts.json     ← Phase artifact: ECharts configs (full option objects)
   placement.json  ← Phase artifact: dashboard layout placement
@@ -65,7 +65,6 @@ bin/           CLI scripts (start, promote, refresh-data, session-status)
   "created_at": "2026-01-01T00:00:00Z",
   "updated_at": "2026-01-01T00:00:00Z",
   "theme": { "mode": "dark", "accent": "#00d4ff", "font": "JetBrains Mono" },
-  "global_refresh_interval": 60,
   "chart_height": 400,
   "sections": [
     {
@@ -81,8 +80,8 @@ bin/           CLI scripts (start, promote, refresh-data, session-status)
     "my-chart": {
       "id": "my-chart",
       "title": "My Chart",
+      "source": "GitHub REST API",
       "dataSource": ["data/my-data.json"],
-      "refresh_interval": 60,
       "echartsOption": { ...full ECharts option... }
     }
   }

@@ -111,10 +111,15 @@ def main():
     if "charts" not in dashboard:
         dashboard["charts"] = {}
 
+    datasource_source = datasource.get("source")
+
     for chart in session_charts:
         chart_id = chart.get("id")
         if not chart_id:
             continue
+        # Stamp source from datasource.json if not already set on the chart
+        if datasource_source and "source" not in chart:
+            chart["source"] = datasource_source
         dashboard["charts"][chart_id] = chart
         print(f"  {'Updated' if is_edit else 'Added'} chart: {chart_id}")
 

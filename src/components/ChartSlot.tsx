@@ -1,5 +1,5 @@
 import ReactECharts from 'echarts-for-react'
-import { usePollingData } from '../hooks/usePollingData'
+import { useDataLoader } from '../hooks/usePollingData'
 import { ErrorCard } from './ErrorCard'
 import { deepMerge } from '../utils/deepMerge'
 import type { ChartConfig, DashboardConfig } from '../types/dashboard'
@@ -7,7 +7,6 @@ import type { ChartConfig, DashboardConfig } from '../types/dashboard'
 interface Props {
   chart: ChartConfig
   height: number
-  globalRefreshInterval: number
   accent: string
   slug?: string
 }
@@ -41,12 +40,11 @@ function applyTheme(
   }
 }
 
-export function ChartSlot({ chart, height, globalRefreshInterval, accent, slug }: Props) {
-  const interval = (chart.refresh_interval ?? globalRefreshInterval) * 1000
-  const { data, error, lastUpdated } = usePollingData(chart.dataSource, interval, slug)
+export function ChartSlot({ chart, height, accent, slug }: Props) {
+  const { data, error } = useDataLoader(chart.dataSource, slug)
 
   if (error) {
-    return <ErrorCard title={chart.title} lastAttempted={lastUpdated} />
+    return <ErrorCard title={chart.title} />
   }
 
   const baseOption = applyTheme(chart.echartsOption, accent)
@@ -57,15 +55,10 @@ export function ChartSlot({ chart, height, globalRefreshInterval, accent, slug }
   return (
     <div className="relative h-full bg-db-surface border border-db-border rounded shadow-panel overflow-hidden">
       {/* Chart title bar */}
-      <div className="absolute top-0 left-0 right-0 z-10 px-3 py-2 flex items-center justify-between bg-db-surface/80 backdrop-blur-sm border-b border-db-border">
+      <div className="absolute top-0 left-0 right-0 z-10 px-3 py-2 flex items-center bg-db-surface/80 backdrop-blur-sm border-b border-db-border">
         <span className="text-xs font-medium text-db-text-muted uppercase tracking-wide truncate">
           {chart.title}
         </span>
-        {lastUpdated && (
-          <span className="text-xs text-db-text-muted/50 shrink-0 ml-2">
-            {lastUpdated.toLocaleTimeString()}
-          </span>
-        )}
       </div>
 
       {/* Loading state */}
@@ -86,11 +79,20 @@ export function ChartSlot({ chart, height, globalRefreshInterval, accent, slug }
           />
         </div>
       )}
+
+      {/* Source attribution */}
+      {chart.source && (
+        <div className="absolute bottom-0 left-0 right-0 px-3 py-1">
+          <span className="text-[10px] text-db-text-muted/40">
+            Source: {chart.source}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
 
-// Preview variant — used in session preview without polling title bar
+// Preview variant — used in session preview
 export function ChartSlotPreview({
   chart,
   height,
@@ -98,13 +100,12 @@ export function ChartSlotPreview({
 }: {
   chart: ChartConfig
   height: number
-  globalConfig: Pick<DashboardConfig, 'global_refresh_interval' | 'theme'>
+  globalConfig: Pick<DashboardConfig, 'theme'>
 }) {
   return (
     <ChartSlot
       chart={chart}
       height={height}
-      globalRefreshInterval={globalConfig.global_refresh_interval}
       accent={globalConfig.theme.accent}
     />
   )
