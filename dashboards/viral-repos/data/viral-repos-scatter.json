@@ -1,0 +1,78 @@
+{
+  "series": [
+    {
+      "data": [
+        {
+          "value": [
+            468306,
+            43887
+          ],
+          "name": "build-your-own-x"
+        },
+        {
+          "value": [
+            440117,
+            33295
+          ],
+          "name": "awesome"
+        },
+        {
+          "value": [
+            437447,
+            43435
+          ],
+          "name": "freeCodeCamp"
+        },
+        {
+          "value": [
+            399834,
+            42780
+          ],
+          "name": "public-apis"
+        },
+        {
+          "value": [
+            382978,
+            65933
+          ],
+          "name": "free-programming-books"
+        },
+        {
+          "value": [
+            349658,
+            43710
+          ],
+          "name": "developer-roadmap"
+        },
+        {
+          "value": [
+            337372,
+            81655
+          ],
+          "name": "coding-interview-university"
+        },
+        {
+          "value": [
+            336350,
+            54548
+          ],
+          "name": "system-design-primer"
+        },
+        {
+          "value": [
+            284235,
+            27236
+          ],
+          "name": "awesome-python"
+        },
+        {
+          "value": [
+            275527,
+            20964
+          ],
+          "name": "996.ICU"
+        }
+      ]
+    }
+  ]
+}

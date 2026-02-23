@@ -1,0 +1,24 @@
+{
+  "series": [
+    {
+      "data": [
+        {
+          "value": 4,
+          "name": "Python"
+        },
+        {
+          "value": 3,
+          "name": "Other"
+        },
+        {
+          "value": 2,
+          "name": "TypeScript"
+        },
+        {
+          "value": 1,
+          "name": "Markdown"
+        }
+      ]
+    }
+  ]
+}
