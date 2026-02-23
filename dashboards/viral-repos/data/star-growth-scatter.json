@@ -1,0 +1,182 @@
+{
+  "series": [
+    {
+      "name": "2022",
+      "data": []
+    },
+    {
+      "name": "2023",
+      "data": []
+    },
+    {
+      "name": "2024",
+      "data": [
+        {
+          "value": [
+            424,
+            101674,
+            239.8
+          ],
+          "name": "DeepSeek-V3"
+        },
+        {
+          "value": [
+            634,
+            148802,
+            234.7
+          ],
+          "name": "FreeDomain"
+        },
+        {
+          "value": [
+            466,
+            87547,
+            187.9
+          ],
+          "name": "markitdown"
+        }
+      ]
+    },
+    {
+      "name": "2025",
+      "data": [
+        {
+          "value": [
+            91,
+            220833,
+            2426.7
+          ],
+          "name": "openclaw"
+        },
+        {
+          "value": [
+            154,
+            73923,
+            480.0
+          ],
+          "name": "skills"
+        },
+        {
+          "value": [
+            136,
+            59118,
+            434.7
+          ],
+          "name": "superpowers"
+        },
+        {
+          "value": [
+            82,
+            33434,
+            407.7
+          ],
+          "name": "oh-my-opencode"
+        },
+        {
+          "value": [
+            85,
+            33764,
+            397.2
+          ],
+          "name": "ui-ux-pro-max-skill"
+        },
+        {
+          "value": [
+            185,
+            71416,
+            386.0
+          ],
+          "name": "spec-kit"
+        },
+        {
+          "value": [
+            298,
+            109083,
+            366.1
+          ],
+          "name": "opencode"
+        },
+        {
+          "value": [
+            355,
+            119870,
+            337.7
+          ],
+          "name": "system-prompts-and-models-of-ai-tools"
+        },
+        {
+          "value": [
+            133,
+            43902,
+            330.1
+          ],
+          "name": "nanochat"
+        },
+        {
+          "value": [
+            312,
+            95422,
+            305.8
+          ],
+          "name": "gemini-cli"
+        },
+        {
+          "value": [
+            129,
+            36948,
+            286.4
+          ],
+          "name": "awesome-claude-skills"
+        },
+        {
+          "value": [
+            153,
+            36686,
+            239.8
+          ],
+          "name": "Mole"
+        },
+        {
+          "value": [
+            399,
+            91852,
+            230.2
+          ],
+          "name": "DeepSeek-R1"
+        },
+        {
+          "value": [
+            316,
+            61547,
+            194.8
+          ],
+          "name": "codex"
+        },
+        {
+          "value": [
+            366,
+            69310,
+            189.4
+          ],
+          "name": "claude-code"
+        },
+        {
+          "value": [
+            246,
+            45988,
+            186.9
+          ],
+          "name": "OpenCut"
+        },
+        {
+          "value": [
+            285,
+            52023,
+            182.5
+          ],
+          "name": "n8n-workflows"
+        }
+      ]
+    }
+  ]
+}

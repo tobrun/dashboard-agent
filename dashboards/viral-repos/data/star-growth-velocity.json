@@ -1,0 +1,42 @@
+{
+  "yAxis": {
+    "data": [
+      "DeepSeek-R1",
+      "FreeDomain",
+      "Mole",
+      "DeepSeek-V3",
+      "awesome-claude-skills",
+      "gemini-cli",
+      "nanochat",
+      "system-prompts-and-models-of-ai-tools",
+      "opencode",
+      "spec-kit",
+      "ui-ux-pro-max-skill",
+      "oh-my-opencode",
+      "superpowers",
+      "skills",
+      "openclaw"
+    ]
+  },
+  "series": [
+    {
+      "data": [
+        230.2,
+        234.7,
+        239.8,
+        239.8,
+        286.4,
+        305.8,
+        330.1,
+        337.7,
+        366.1,
+        386.0,
+        397.2,
+        407.7,
+        434.7,
+        480.0,
+        2426.7
+      ]
+    }
+  ]
+}
